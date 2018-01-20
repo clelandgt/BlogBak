@@ -1,5 +1,12 @@
-# 使用Hexo搭建个人博客
+---
+title: 使用Hexo搭建个人博客
+date: 2018-01-18 00:47:25
+tags: hexo
+---
+![](http://cleland.oss-cn-beijing.aliyuncs.com/blog/img/figure_captions/waters-3084551_1920.jpg)
+
 作为一枚程序猿，可以通过写博客对近段时间进行总结，同时也了提高表达能力。更重要的是在分享过程中，可以结交一些朋友，所以最近打算搭建一个博客网站。通过调研，使用**Hexo**(基于node.js的静态博客框架)+**Github.io**(用于部署网站的空间资源)可快速部署博客网站。
+<!--more-->
 
 
 本文基于**MacOS**环境搭建,自带**Git**,所以不需要再下载安装。

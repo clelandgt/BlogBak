@@ -85,6 +85,15 @@ deploy:
 
 
 # 主题自定义
+sitemap:
+    path: sitemap.xml
+baidusitemap:
+    path: baidusitemap.xm
+
+feed:
+    type: atom
+    path: atom.xml
+    limit: 100
 
 jsonContent:
     meta: false
