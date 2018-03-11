@@ -1,10 +1,15 @@
-# Hive-hive使用压缩
-<!-- more -->
+---
+title: Hive|hive使用压缩
+date: 2018-03-11 18:22:09
+tags:
+---
+![](http://cleland.oss-cn-beijing.aliyuncs.com/blog/img/Hive-hive使用压缩/hive-hive使用压缩1.jpg)
 hive中的数据使用压缩的好处(执行查询时会自动解压)：
 
 1. 可以节约磁盘的空间，基于文本的压缩率可达40%+;
 2. 压缩可以增加吞吐量和性能量(减小载入内存的数据量)，但是在压缩和解压过程中会增加CPU的开销。所以针对IO密集型的jobs(非计算密集型)可以使用压缩的方式提高性能。
 
+<!-- more -->
 
 ## 主流的压缩算法
 TODO：待补充
@@ -22,7 +27,7 @@ TODO：待补充
 
 ```
 CREATE TABLE A(
-	...
+    ...
 )
 STORED AS SEQUENCEFILE
 ```
