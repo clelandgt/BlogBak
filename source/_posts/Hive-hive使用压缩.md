@@ -12,7 +12,27 @@ hive中的数据使用压缩的好处(执行查询时会自动解压)：
 <!-- more -->
 
 ## 主流的压缩算法
-TODO：待补充
+查看集群的支持的压缩算法.
+
+``` shell
+hive -e "set io.compression.codecs"
+```
+
+返回支持的压缩算法
+``` shell
+io.compression.codecs=org.apache.hadoop.io.compress.DefaultCodec,
+org.apache.hadoop.io.compress.GzipCodec,
+org.apache.hadoop.io.compress.BZip2Codec,
+org.apache.hadoop.io.compress.DeflateCodec,
+org.apache.hadoop.io.compress.SnappyCodec,
+org.apache.hadoop.io.compress.Lz4Codec
+```
+
+常用的压缩算法：
+
+- Snappy
+- Gzip
+- ZLIB
 
 
 ## hive文件格式
@@ -23,7 +43,7 @@ TODO：待补充
 
 
 ## hive配置压缩
-建表时申明文件的存储格式为SEQUENCEFILE
+建表时申明文件的存储格式，默认为TEXTFILE。如使用压缩常使用分块压缩**SEQUENCEFILE**。
 
 ```
 CREATE TABLE A(
@@ -32,7 +52,7 @@ CREATE TABLE A(
 STORED AS SEQUENCEFILE
 ```
 
-数据处理的中间过程和结果使用snappy算法
+数据处理的中间过程和结果使用**Snappy**算法进行压缩。
 
 ```
 -- 任务中间压缩
@@ -47,7 +67,14 @@ set mapred.output.compression.type=BLOCK;
 ```
 
 ## 压缩测试案例
-TODO：待补充
+Hive原始数据为119.2G。
+
+| 压缩算法 | TEXTFILE格式 | SEQUENCEFILE | RCFILE | ORCFILE |
+| :-- | :-- | :-- | :-- | :-- |
+| 不压缩  | 119.2G | 54.1G | 20.0G | 98G | 
+| Snappy | 30.2G | 23.6G | 13.6G | 27.0G |
+| Gzip | 18.8G | 14.1G | 不支持 | 15.2 G | 
+| ZLIB | 不支持 | 不支持 | 10.1G | 不支持 |
 
 
 ## 参考
