@@ -1,7 +1,7 @@
 ---
 title: pyenv管理python虚拟环境
 date: 2018-03-22 23:21:41
-tags:
+tags: python
 ---
 ![](http://cleland.oss-cn-beijing.aliyuncs.com/blog/img/Hive-hive使用压缩/hive-hive使用压缩1.jpg)
 

@@ -24,7 +24,7 @@ tags: hexo
 - Hexo目录结构
 - Hexo常用命令
 - 更换主题
-- 参考文章
+- 参考
 
 <!-- /MarkdownTOC -->
 

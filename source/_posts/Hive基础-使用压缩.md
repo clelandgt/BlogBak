@@ -1,7 +1,7 @@
 ---
 title: Hive|hive使用压缩
 date: 2018-03-11 18:22:09
-tags:
+tags: hive
 ---
 ![](http://cleland.oss-cn-beijing.aliyuncs.com/blog/img/Hive-hive使用压缩/hive-hive使用压缩1.jpg)
 hive中的数据使用压缩的好处(执行查询时会自动解压)：

@@ -1,7 +1,7 @@
 ---
 title: docker的基本使用
 date: 2018-04-05 21:44:30
-tags:
+tags: docker
 ---
 系统环境：mac_sierra
 ![](http://cleland.oss-cn-beijing.aliyuncs.com/blog/img/figure_captions/waters-3084551_1920.jpg)
