@@ -1,7 +1,7 @@
 ---
-title: Hive-hive基本操作
-date: 2018-04-26 00:22:15
-tags:
+title: Hive 基本操作
+tags: ["原创", "hive", "markdown"]
+notebook: hive
 ---
 
 ![](http://cleland.oss-cn-beijing.aliyuncs.com/blog/img/Hive-hive使用压缩/hive-hive使用压缩1.jpg)
@@ -28,7 +28,13 @@ tags:
         - 删除表
         - 修改表
         - 表的存储格式
-    - 数据导入与导出
+        - 快速表复制
+    - 数据操作
+        - 装载数据
+        - 将查询语句的结果插入数据
+        - 静态分区+动态分区插入
+        - 单个查询语句中创建表并加载数据
+        - 导出数据
     - 常用函数
 - udf
 - 待写
@@ -70,6 +76,8 @@ Hive 是基于hadoop的数据仓库，使用该应用程序进行相关的静态
 |STRING|字符序列，可使用单/双引号|3.1415|
 |TIMESTAMP|时间戳|132788232394(Unix新纪元秒)|
 |BINARY|字节数组||
+
+TODO: 整型的数据范围
 
 ### 集合数据类型
 |数据类型|例子|
@@ -203,21 +211,149 @@ hive> ALTER TABLE log_messages DROP IF EXISTS PARTITION(year=2011,month=12,day=2
 #### 表的存储格式
 将在高级用法中补充**存储格式+压缩+分区+分桶**实现hive的优化。
 
+#### 快速表复制
+TODO: 待补充
 
-### 数据导入与导出
 
+### 数据操作
+当前数据集在master1上`/home/devops/datasets`目录.
 
+``` sql
+-- 内部表
+DROP TABLE IF EXISTS test.users;
+CREATE TABLE IF NOT EXISTS test.users(
+    id INT COMMENT '用户id',
+    age TINYINT COMMENT '年龄',
+    gender STRING COMMENT '性别',
+    occupation STRING COMMENT '职业',
+    zip_code INT COMMENT '邮编'
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '|';
+
+-- 外部表
+DROP TABLE IF EXISTS test.users_mini;
+CREATE EXTERNAL TABLE IF NOT EXISTS test.users_mini(
+    id INT COMMENT '用户id',
+    age TINYINT COMMENT '年龄'
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
+LOCATION '/user/hive/warehouse/test.db/users_mini';
+```
+
+#### 装载数据
+
+``` sql
+LOAD DATA LOCAL INPATH '/home/devops/datasets/u.user'
+OVERWRITE INTO TABLE test.users;
+```
+其中加LOCAL指指定master服务器的本地文件，不加LOCAL指hdfs上的文件。 查看加载的数据：
+
+``` 
+hive> SELECT * FROM test.users LIMIT 2;
+OK
+1   24  M   technician  85711
+2   53  F   other   94043
+```
+如果需指定加载的数据到那个分区,如下：
+
+``` sql
+LOAD DATA LOCAL INPATH '/home/devops/datasets/u.user'
+OVERWRITE INTO TABLE test.users
+PATITION (country='China');
+```
+
+#### 将查询语句的结果插入数据
+
+``` sql
+INSERT OVERWRITE TABLE test.users_mini
+SELECT 
+    id
+    ,age
+FROM test.users;
+```
+
+查看插入的数据
+
+```
+hive> SELECT * FROM test.users_mini LIMIT 2;
+OK
+1   24
+2   53
+```
+
+#### 静态分区+动态分区插入
+TODO: 待补充
+
+#### 单个查询语句中创建表并加载数据
+``` sql
+CREATE TABLE test.ge_users AS
+SELECT 
+    id
+    ,gender
+FROM test.users;
+```
+但是这个不适用与外部表，特别是需要指定分区位置的外部表。
+
+#### 导出数据
+如果hive表对应的数据文件格式刚好是用户需要的格式，只需要拷贝相应文件或文件夹就行。如不是，可使用一下的方式：
+
+```
+INSERT OVERWRITE LOCAL DIRECTORY '/home/devops/users'
+SELECT  
+    id,
+    age,
+    gender,
+    occupation,
+    zip_code
+FROM test.users;
+```
 
 ### 常用函数
 
+``` 
+--  聚合函数
+count(expr)
+sum(col)
+avg(col)
+min(col)
+max(col)
+collect_set(col)  -- 返回集合col元素排重后的数组(select非groupby的字段时可使用)
+
+-- 日期函数
+to_date(STRING timestamp)  -- 返回时间字符串的日期部分，例如：to_date('1970-01-01 00:00:00')='1970-01-01'
+datediff(STRING start_date, STRING end_date)  -- 计算两个日期之间的天数，例如：datediff('2018-04-04', '2018-04-01')=3
+date_add(STRING start_date, INT day)  -- 从日期减去day天数，例如：date_add('2018-04-01', 4)='2018-04-05'
+date_sub(STRING start_date, INT day)  -- 从日期减去day天数，例如：date_sub('2018-04-20', 4)='2018-04-16'
+
+year(STRING date)  -- 返回时间字符串中的年
+month(STRING date)  -- 返回时间字符串中的月
+day(STRING date)  -- 返回时间字符串中的日期
+hour(STRING date)  -- 返回时间字符串中的时
+minute(STRING date)  -- 返回时间字符串中的分
+second(STRING date)  -- 返回时间字符串中的秒
+weekofyear(STRING date)  -- 一年的第几周
+
+--  其他内置
+concat(STRING s1, STRING s2)
+concat_ws(STRING separator, STRING s1, STRING s2)
+format_number(NUMBER x, INT d)
+get_json_object(STRING json_string, STRING PATH)
+length(STRING s)
+ltrim(STRING s)  -- 将字符串s前面出现的空格全部去除掉
+rtrim(STRING s)  -- 将字符串s后面出现的空格全部去除掉
+trim(STRING s)  -- 将字符串s前后面出现的空格全部去除掉
+```
 
 ## udf
 
 ## 待写
 
 - 性能优化1 (配置与sql相关优化)
-- 性能优化2（分表+分桶+压缩 [参考连接](https://blog.csdn.net/djd1234567/article/details/51581312)）
-
+- 性能优化2（分表(动态分表)+分桶+压缩 [参考连接](https://blog.csdn.net/djd1234567/article/details/51581312)）
+- hive+hbase整合
+- hive第三方接口
+- hive执行计划
+- hive锁表
 
 
 ## 参考
