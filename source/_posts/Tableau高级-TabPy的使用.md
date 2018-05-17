@@ -3,7 +3,7 @@ title: Tableau 高级 | TabPy的使用
 date: 2018-05-16 23:35:49
 tags: tableau,python
 ---
-
+![](http://cleland.oss-cn-beijing.aliyuncs.com/blog/img/Tableau-连接hive/tableau连接hive1.jpg)
 Tableau桌面版10.1以上的版本支持使用TabPy。
 <!-- more -->
 

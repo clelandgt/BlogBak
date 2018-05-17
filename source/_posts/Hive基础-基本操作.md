@@ -1,7 +1,7 @@
 ---
 title: Hive 基本操作
-tags: ["原创", "hive", "markdown"]
-notebook: hive
+date: 2018-03-11 18:22:09
+tags: hive
 ---
 
 ![](http://cleland.oss-cn-beijing.aliyuncs.com/blog/img/Hive-hive使用压缩/hive-hive使用压缩1.jpg)
