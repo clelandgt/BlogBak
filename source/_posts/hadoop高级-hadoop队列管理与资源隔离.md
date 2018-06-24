@@ -1,7 +1,7 @@
 ---
 title: hadoop高级-hadoop队列管理与资源隔离
 date: 2018-05-17 20:13:01
-tags: haoop
+tags: hadoop
 ---
 
 ![](http://cleland.oss-cn-beijing.aliyuncs.com/blog/img/Hive-hive使用压缩/hive-hive使用压缩1.jpg)
