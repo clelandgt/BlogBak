@@ -4,6 +4,36 @@ date: 2018-06-25 00:15:45
 tags:
 ---
 
+<!-- MarkdownTOC -->
+
+- linux初始配置
+    - 添加hadoop用户
+    - 修改hostname与地址映射
+    - 免密登录设置
+    - 安装java
+- Hadoop部署
+    - 下载hadoop安装包并解压
+    - 配置hdfs
+        - 配置java环境变量
+        - 配置core-site.xml
+        - 配置hdfs-site.xml
+        - 配置slaves
+        - 启动服务
+    - 配置yarn
+    - 启动服务
+        - header
+        - worker
+- 其他
+    - 阿里云安全组
+    - 本地host
+- 问题
+    - 1. 无法启动datanode,报错"ulimit -a for user root"
+    - 2. hdfs 显示本地目录问题
+
+<!-- /MarkdownTOC -->
+
+
+
 主机清单
 
 |角色|外网ip|内网ip|
@@ -82,15 +112,27 @@ export PATH=$PATH:$JAVA_HOME/bin
 ## Hadoop部署
 选择2.5以上hadoop版本,下载的地方：
 
-http://archive.apache.org/dist/
-http://archive.cloudera.com/cdh5/
+- http://archive.apache.org/dist/
+- http://archive.cloudera.com/cdh5/
 
 ### 下载hadoop安装包并解压
-
 
 ```
 $ cd /opt/softwares/
 $ tar -xzf hadoop-2.5.0.tar.gz -C /opt/modules/
+```
+
+添加hadoop主目录到环境变量，编辑/etc/profile文件，添加以下两行
+
+```
+# HADOOP_HOME
+export HADOOP_HOME=/opt/modules/hadoop-2.5.0
+export PATH=$PATH:$HADOOP_HOME/bin
+```
+并重新加载
+
+```
+$ source /etc/profile
 ```
 
 ### 配置hdfs
@@ -255,8 +297,70 @@ $ jps  # 查看服务是否都正常打开
 $ sbin/yarn-daemon.sh start nodemanager
 ```
 
-### 启动服务
-#### header
+
+
+### 测试hdfs和yarn是否安装正常
+编辑文本test
+
+```
+hadoop  spark
+yarn  spark hadoop hadoop
+hive hive spark hadoop
+```
+上传到hdfs, 并执行hadoop官方例子：world_count
+
+```
+$ hadoop fs -put -p test /user/hadoop/wc.input
+$ yarn jar /opt/modules/hadoop-2.5.0/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.5.0.jar wordcount /user/hadoop/wc.input/   /user/hadoop/wc.output
+$ hadoop fs -text  /user/hadoop/wc.output/part-r-00000 # 查看运行后的结果
+hadoop	3
+hive	3
+java	2
+spark	3
+```
+
+### 机器时间同步
+因为使用的是阿里云的ECS，里面已设置了时间同步。
+TODO: 需补充机器时间同步的设置
+
+## ZooKeeper
+解压到安装目录
+
+```
+$ tar zxf zookeeper-3.4.5.tar.gz -C /opt/modules/
+```
+
+### 修改配置文件
+
+
+```
+$ cp ${ZOOKEEPER_HOME}/conf/zoo_sample.cfg ${ZOOKEEPER_HOME}/conf/zoo.cfg  # 拷贝一个zoo.cfg文件
+$ mkdir ${ZOOKEEPER_HOME}/zkData   # ${ZOOKEEPER_HOME}=/opt/modules/zookeeper-3.4.5， 创建一个存放数据的文件夹
+```
+
+编辑配置文件zoo.cfg
+
+```
+dataDir=/opt/modules/zookeeper-3.4.5/zkData
+
+server.1=header:28888:38888
+server.2=worker-1:28888:38888
+server.3=worker-2:28888:38888
+```
+
+还需要创建唯一标识，如server.1中的1,需要在dataDir目录下创建myid文件，内容编辑为1。拷贝安装配置好的ZooKeeper到worker-1, worker-2. 分别修改唯一标识myid为2，3
+
+**注意**：安装的zookeeper服务数= 2n+1。 n为可损坏的机器数，这里为1.
+
+其中header,worker-1,worker-2上的zookeeper服务
+```
+$ bin/zkServer.sh start  # 启动服务
+$   # 查看进程
+```
+
+
+##启动服务
+### header
 
 ```
 $ bin/hdfs namenode -format
@@ -265,19 +369,31 @@ $ sbin/hadoop-daemon.sh start datanode
 $ sbin/yarn-daemon.sh start nodemanager
 $ sbin/yarn-daemon.sh start resourcemanager
 $ sbin/mr-jobhistory-daemon.sh start historyserver
+$ bin/zkServer.sh start
 ```
 
-#### worker
+### worker
 
 ```
 $ sbin/hadoop-daemon.sh start datanode
 $ sbin/yarn-daemon.sh start nodemanager
+$ bin/zkServer.sh start
 ```
+
+
 
 ## 其他
 ### 阿里云安全组
 使用阿里云时，需要注意使用安全组，配置上需要开放的端口。
 
+### 本地host
+本地机器需添加以下host方便访问服务器：
+
+```
+120.77.44.77     header
+39.108.184.123  worker-1
+39.108.1.16     worker-2
+```
 ## 问题
 ### 1. 无法启动datanode,报错"ulimit -a for user root"
 datanamenode运行时打开文件数，达到系统最大限制
@@ -296,9 +412,5 @@ $ vim /etc/security/limits.conf  # 修改nofile限制
 ```
 
 还不能解决，就清除hadoop.tmp.dir对应目录下对应的文件。
-
-### 2. hdfs 显示本地目录问题
-
-TODO: 暂时使用bin/hadoop fs -ls hdfs://header:9000/方式访问
 
 
