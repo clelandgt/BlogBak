@@ -145,7 +145,7 @@ $ source /etc/profile
 export JAVA_HOME=/opt/modules/jdk1.7.0_67
 ```
 
-#### 配置core-site.xml
+#### 配置hdfs-site.xml
 设置dfs.replication=2，副本数为2，默认为3.
 
 ```
@@ -162,7 +162,7 @@ export JAVA_HOME=/opt/modules/jdk1.7.0_67
 </configuration>
 ```
 
-#### 配置hdfs-site.xml
+#### 配置core-site.xml
 
 - 配置hdfs网络服务为hdfs://header:9000；
 - 配置用户为hadoop；
@@ -381,7 +381,6 @@ $ bin/zkServer.sh start
 ```
 
 
-
 ## 其他
 ### 阿里云安全组
 使用阿里云时，需要注意使用安全组，配置上需要开放的端口。
@@ -390,7 +389,7 @@ $ bin/zkServer.sh start
 本地机器需添加以下host方便访问服务器：
 
 ```
-120.77.44.77     header
+120.77.44.77    header
 39.108.184.123  worker-1
 39.108.1.16     worker-2
 ```
