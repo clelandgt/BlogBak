@@ -139,7 +139,8 @@ hbase> drop 'test'
 ### 下载安装kafka
 ```
 $ wget https://archive.apache.org/dist/kafka/0.8.2.1/kafka_2.11-0.8.2.1.tgz
-$ tar xvf kafka_2.11-0.8.2.1.tgz -C /opt/modules
+$ wget https://archive.apache.org/dist/kafka/0.9.0.0/kafka_2.11-0.9.0.0.tgz
+$ tar xvf kafka_2.11-0.9.0.0.tgz -C /opt/modules
 $ mkdir kafka-logs  # kafka主目录下创建文件夹
 ```
 
@@ -205,7 +206,7 @@ export JAVA_HOME=/opt/modules/jdk1.7.0_67
 ```
 agent.sources = s1
 agent.channels = c1
-agent.slinks = k1
+agent.sinks = k1
 
 agent.sources.s1.type = exec
 agent.sources.s1.command = tail -F /opt/datas/weblog-flume.log
@@ -219,7 +220,7 @@ agent.channels.c1.keep-alive=5
 agent.sinks.k1.type = avro
 agent.sinks.k1.channel = c1
 agent.sinks.k1.hostname = header
-agent.sinks.k1.port = 5555
+agent.sinks.k1.port = 55555
 ```
 
 -  capacity: 容量大小
@@ -240,12 +241,12 @@ export HBASE_HOME=/opt/modules/hbase-0.98.6-hadoop2
 ```
 agent.sources = r1
 agent.channels = kafkaC hbaseC
-agent.slinks = kafkaSink  hbaseSink
+agent.sinks = kafkaSink  hbaseSink
 
 agent.sources.r1.type = avro
 agent.sources.r1.channels = hbaseC kafkaC
 agent.sources.r1.bind = header
-agent.sources.r1.port = 5555
+agent.sources.r1.port = 55555
 agent.sources.r1.threads = 5
 
 #************** flume + hbase *************
@@ -309,13 +310,16 @@ public List<PutRequest> getActions() {
     if (payloadColumn != null) {
         byte[] rowKey;
         try {
-            String[] columns = String.valueOf(payloadColumn).split(",");
-            String[] values = String.valueOf(this.payload).split(",");
+            String[] columns = new String(this.payloadColumn).split(",");
+            String[] values = new String(this.payload).split(",");
+
             for(int i=0; i<columns.length; i++){
                 byte[] colColumn = columns[i].getBytes();
                 byte[] colValue = values[i].getBytes();
-                String datetime = values[0].toString();
-                String userid = values[1].toString();
+
+                if(columns.length != values.length) break;
+                String datetime = String.valueOf(values[0]);
+                String userid = String.valueOf(values[1]);
                 rowKey = SimpleRowKeyGenerator.getKfkRowKey(userid, datetime);
                 PutRequest putRequest = new PutRequest(table, rowKey, cf, colColumn, colValue);
                 actions.add(putRequest);
@@ -327,6 +331,13 @@ public List<PutRequest> getActions() {
     }
     return actions;
 }
+```
+
+AsyncHBaseSink类中的修改SimpleAsyncHbaseEventSerializer为KfkAsyncHbaseEventSerializer
+
+```
+eventSerializerType =
+          "org.apache.flume.sink.hbase.KfkAsyncHbaseEventSerializer";
 ```
 
 编译打包jar包,上传到header的flume的lib目录。
@@ -342,7 +353,8 @@ public List<PutRequest> getActions() {
 ```
 $ wget http://download.labs.sogou.com/dl/sogoulabdown/SogouQ/SogouQ.mini.tar.gz
 $ tar -xvf SogouQ.mini.tar.gz -C /opt/datas
-$ mv SogouQ.sample weblogs.log
+$ cat SogouQ.sample | tr "\t" "," > weblog2.log  # 将文件中的tab更换成逗号
+$ cat weblog2.log | tr " " "," > weblogs.log
 ```
 
 ### 编写启动脚本
@@ -444,7 +456,7 @@ zk> rmr /brokers/topics/protest
 创建新的topic
 
 ```
-$ bin/kafka-topics.sh --create --zookeeper header:2181,worker-1:2181,worker-2:2181 --replication-factor 1 --partitions 1 --topic weblogs
+$ bin/kafka-topics.sh --create --zookeeper header:2181,worker-1:2181,worker-2:2181 --replication-factor 3 --partitions 1 --topic weblogs
 ```
 
 
@@ -472,5 +484,25 @@ $ ./kfk-test-consumer.sh  # worker-1里的kafka消费程序
 $ bin/hadoop dfsadmin -safemode leave
 ```
 
+### flume+kafka报错
+问题：
+
+```
+2018-07-22 22:20:33,733 (kafka-producer-network-thread | producer-1) [ERROR - org.apache.kafka.clients.producer.internals.Sender.run(Sender.java:130)] Uncaught error in kafka producer I/O thread:
+org.apache.kafka.common.protocol.types.SchemaException: Error reading field 'throttle_time_ms': java.nio.BufferUnderflowException
+	at org.apache.kafka.common.protocol.types.Schema.read(Schema.java:71)
+	at org.apache.kafka.clients.NetworkClient.handleCompletedReceives(NetworkClient.java:439)
+	at org.apache.kafka.clients.NetworkClient.poll(NetworkClient.java:265)
+	at org.apache.kafka.clients.producer.internals.Sender.run(Sender.java:216)
+	at org.apache.kafka.clients.producer.internals.Sender.run(Sender.java:128)
+	at java.lang.Thread.run(Thread.java:745)
+```
+
+解决方案：
+
+升级kafka版本为0.9.x
+
+
 ## 引用
 - [Hadoop错误9_解决Hadoop的Safe mode is ON问题](https://blog.csdn.net/wang_zhenwei/article/details/48707981)
+- [Kafka - Flume - Oracle Database - Error reading field 'throttle_time_ms'](https://stackoverflow.com/questions/43612344/kafka-flume-oracle-database-error-reading-field-throttle-time-ms)
