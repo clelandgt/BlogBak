@@ -138,7 +138,6 @@ hbase> drop 'test'
 ## Kafka
 ### 下载安装kafka
 ```
-$ wget https://archive.apache.org/dist/kafka/0.8.2.1/kafka_2.11-0.8.2.1.tgz
 $ wget https://archive.apache.org/dist/kafka/0.9.0.0/kafka_2.11-0.9.0.0.tgz
 $ tar xvf kafka_2.11-0.9.0.0.tgz -C /opt/modules
 $ mkdir kafka-logs  # kafka主目录下创建文件夹
