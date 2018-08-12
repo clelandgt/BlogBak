@@ -113,7 +113,7 @@ wordcount.jar包含以下内容:
 
 ## wordcount案例
 
-编辑wordcount.txt文件，并上传到hdfs://user/gantao/wordcount.txt 
+编辑wordcount.txt文件，并上传到hdfs://data/input/wordcount.txt 
  
 ``` text
 hadoop inside hive
@@ -122,6 +122,7 @@ salary inside hadoop
 baby love hadoop
 ```
 
+编译wordcount打包jar包
 
 ``` java
 import java.io.IOException;
@@ -188,4 +189,274 @@ public class WordCount {
     }
 }
 ```
+运行wordcount.jar包
+
+```
+$ hadoop jar wordcount.jar /data/input  /data/output
+```
+
+## 查询学生总分数
+编辑score.txt文件，并上传到并上传到hdfs://data/score/score.txt 
+
+```
+1 jack 78 15
+2 tome 23 16
+3 jane 45 14
+1 jack 90 15
+2 tome 56 16
+3 jane 88 14
+```
+
+### 分析
+
+分析map
+
+```
+{1, user}, {1, user}
+```
+分析reduce过程
+
+```
+{1, {user, user}}
+```
+
+使用mapreduce程序得到学生总分数如下：
+
+```
+jack 168 15
+tome 79 16
+jane 133 14
+```
+
+### 源码
+
+UserMapper.java
+
+``` java
+package cleland.club;
+
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+
+import java.io.IOException;
+import java.util.StringTokenizer;
+
+
+public class UserMapper extends Mapper<LongWritable, Text, Text, UserWritable>{
+
+    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
+        StringTokenizer str = new StringTokenizer(value.toString());
+        int counter = 0;
+
+        String id = "";
+        String name = "";
+        int score = 0;
+        short age = 0;
+        while(str.hasMoreTokens()){
+            if(counter == 0){
+                id = str.nextToken();
+            }else if(counter == 1){
+                name = str.nextToken();
+            }else if(counter == 2){
+                score = Short.parseShort(str.nextToken());
+            }else if(counter == 3){
+                age = Short.parseShort(str.nextToken());
+            }
+            counter += 1;
+        }
+
+        context.write(new Text(id), new UserWritable(id,name,score,age));
+    }
+}
+```
+
+UserReduce.java
+
+``` java
+package cleland.club;
+
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.io.Text;
+
+import java.io.IOException;
+
+public class UserReducer extends Reducer<Text, UserWritable, Text, UserWritable> {
+
+    public void reduce(Text key, Iterable<UserWritable> values, Context context) throws IOException,InterruptedException{
+        int totalScore = 0;
+        UserWritable resultUser = null;
+
+        for(UserWritable user: values){
+            if(resultUser == null){
+                resultUser = new UserWritable(user.getId(),user.getName(),user.getScore(),user.getAge());
+            }
+            totalScore += user.getScore();
+        }
+        resultUser.setScore(totalScore);
+        context.write(key,resultUser);
+    }
+}
+```
+
+UserScoreInfo.java
+
+``` java
+package cleland.club;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+
+public class UserScoreInfo {
+    public static void main(String[] args) throws Exception{
+        Configuration conf = new Configuration();
+        if(args.length>2){
+            System.err.println("Usage: userscoreinfo <in> [<in>...] <out>");
+            System.exit(2);
+        }
+        Job job = new Job(conf, "student total score");
+        job.setJarByClass(UserScoreInfo.class);
+        job.setMapperClass(UserMapper.class);
+        job.setReducerClass(UserReducer.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(UserWritable.class);
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
+```
+
+UserWritable.java自定义类型
+
+```
+package cleland.club;
+
+import org.apache.hadoop.io.WritableComparable;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+
+public class UserWritable implements WritableComparable<UserWritable> {
+    private String name = "";
+    private int score = 0;
+    private short age = 0;
+    private String id = "";
+
+    //在反序列化时，反射机制需要调用空参构造函数
+    public UserWritable(){};
+
+    public UserWritable(String id, String name, int score, short age){
+        this.id = id;
+        this.name = name;
+        this.score = score;
+        this.age = age;
+    }
+
+    public String getName(){
+        return name;
+    }
+
+    public void setName(String name){
+        this.name = name;
+    }
+
+    public int getScore(){
+        return score;
+    }
+
+    public void setScore(int score){
+        this.score = score;
+    }
+
+    public short getAge(){
+        return age;
+    }
+
+    public void setAge(short age){
+        this.age = age;
+    }
+
+    public String getId(){
+        return this.id;
+    }
+
+    public void setId(String id){
+        this.id = id;
+    }
+
+    public void set(String id, String name, int score, short age){
+        this.id = id;
+        this.name = name;
+        this.score = score;
+        this.age = age;
+    }
+
+    @Override
+    public int compareTo(UserWritable o){
+        int result  = this.name.compareTo(o.getName());
+        if (result != 0){
+            return result;
+        }
+
+        return this.score > o.getScore() ? 1 : -1;
+    }
+
+    @Override
+    public void write(DataOutput dataOutput) throws IOException{
+        dataOutput.writeUTF(this.id);
+        dataOutput.writeUTF(this.name);
+        dataOutput.writeInt(this.score);
+        dataOutput.writeShort(this.age);
+    }
+
+    @Override
+    public void readFields(DataInput dataInput) throws  IOException{
+        this.id = dataInput.readUTF();
+        this.name = dataInput.readUTF();
+        this.score = dataInput.readInt();
+        this.age = dataInput.readShort();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UserWritable that = (UserWritable) o;
+
+        if (score != that.score) return false;
+        if (age != that.age) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        return id != null ? id.equals(that.id) : that.id == null;
+    }
+
+    @Override
+    public int hashCode(){
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + score;
+        result = 31 * result + (int) age;
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString(){
+        return "name='" + name + '\'' +
+                ", score=" + score +
+                ", age=" + age +
+                ", id='" + id + "'";
+    }
+}
+```
+
+
+
 
