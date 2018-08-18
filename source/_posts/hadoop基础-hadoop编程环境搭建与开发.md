@@ -12,6 +12,9 @@ tags:
     - 新建项目
     - 编译与打包
 - wordcount案例
+- 查询学生总分数案例
+    - 分析
+    - 源码
 
 <!-- /MarkdownTOC -->
 
@@ -195,7 +198,7 @@ public class WordCount {
 $ hadoop jar wordcount.jar /data/input  /data/output
 ```
 
-## 查询学生总分数
+## 查询学生总分数案例
 编辑score.txt文件，并上传到并上传到hdfs://data/score/score.txt 
 
 ```
@@ -334,7 +337,7 @@ public class UserScoreInfo {
 
 UserWritable.java自定义类型
 
-```
+``` java
 package cleland.club;
 
 import org.apache.hadoop.io.WritableComparable;
@@ -456,7 +459,3 @@ public class UserWritable implements WritableComparable<UserWritable> {
     }
 }
 ```
-
-
-
-
