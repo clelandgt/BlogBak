@@ -412,4 +412,37 @@ $ vim /etc/security/limits.conf  # 修改nofile限制
 
 还不能解决，就清除hadoop.tmp.dir对应目录下对应的文件。
 
+### 2.配置hadoop集群namenode的hostname千万不要包含下划线
+
+在部署hadoop集群时，core-site.xml中的fs.defaultFS项的value不可包含下划线，否则会报以下错误
+
+```
+************************************************************/
+15/11/16 01:36:22 INFO namenode.NameNode: registered UNIX signal handlers for [TERM, HUP, INT]
+15/11/16 01:36:22 INFO namenode.NameNode: createNameNode []
+15/11/16 01:36:22 INFO impl.MetricsConfig: loaded properties from hadoop-metrics2.properties
+15/11/16 01:36:23 INFO impl.MetricsSystemImpl: Scheduled snapshot period at 10 second(s).
+15/11/16 01:36:23 INFO impl.MetricsSystemImpl: NameNode metrics system started
+15/11/16 01:36:23 INFO namenode.NameNode: fs.defaultFS is hdfs://local_master:9000
+15/11/16 01:36:23 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+15/11/16 01:36:23 FATAL namenode.NameNode: Failed to start namenode.
+java.lang.IllegalArgumentException: Does not contain a valid host:port authority: local_master:9000
+    at org.apache.hadoop.net.NetUtils.createSocketAddr(NetUtils.java:212)
+    at org.apache.hadoop.net.NetUtils.createSocketAddr(NetUtils.java:164)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.getAddress(NameNode.java:384)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.getAddress(NameNode.java:436)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.getAddress(NameNode.java:415)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.getRpcServerAddress(NameNode.java:466)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.loginAsNameNodeUser(NameNode.java:566)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.initialize(NameNode.java:586)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.<init>(NameNode.java:764)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.<init>(NameNode.java:748)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.createNameNode(NameNode.java:1441)
+    at org.apache.hadoop.hdfs.server.namenode.NameNode.main(NameNode.java:1507)
+15/11/16 01:36:23 INFO util.ExitUtil: Exiting with status 1
+15/11/16 01:36:23 INFO namenode.NameNode: SHUTDOWN_MSG:
+/************************************************************
+SHUTDOWN_MSG: Shutting down NameNode at local_master/192.168.3.10
+```
+
 

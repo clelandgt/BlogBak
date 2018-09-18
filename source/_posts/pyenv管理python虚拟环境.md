@@ -39,6 +39,11 @@ $ pyenv versions
 * system (set by /Users/cleland/.pyenv/version)
 2.7.14
 ```
+设置局部python版本，对当前目录有效
+
+``` shell
+$ pyenv local 2.7.14
+```
 
 设置全局python版本
 
