@@ -84,7 +84,7 @@ $ tabadmin start
 # 计算字段1
 SCRIPT_STR("
 import requests
-return [requests.get('http://boss.huizhaofang.com/api/if/calc_breach_refund/?contract_no={}'.format(item)).text for item in _arg1]", ATTR([contract_no]))
+return [requests.get('{url}/?contract_no={}'.format(item)).text for item in _arg1]", ATTR([contract_no]))
 
 # 计算字段2
 SCRIPT_REAL("
