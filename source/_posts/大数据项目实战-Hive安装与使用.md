@@ -26,8 +26,9 @@ $ cp conf/hive-env.sh.template conf/hive-env.sh
 编辑hive-env.sh
 
 ```
-HADOOP_HOME = /opt/modules/hadoop-2.5.0
-HIVE_CONF_DIR = /opt/modules/hive-0.13.1-cdh5.3.6/conf
+# 注意这个k,v值之间不能有空格
+HADOOP_HOME=/opt/modules/hadoop-2.5.0
+HIVE_CONF_DIR=/opt/modules/hive-0.13.1-cdh5.3.6/conf
 ```
 
 新建并编辑hive-site文件
