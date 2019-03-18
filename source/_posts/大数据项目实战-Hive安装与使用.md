@@ -90,8 +90,7 @@ mysql> flush privileges;  -- 刷新权限
 - hbase-hadoop2-compat-0.98.6-hadoop2.jar
 - hbase-server-0.98.6-hadoop2.jar
 - hbase-hadoop-compat-0.98.6-hadoop2.jar
-- high-scale-lib-1.1.1.jar
-
+- high-scale-lib-1.1.1.jar (高版本的hive2.3.4不需要改包)
 
 创建业务表结构
 

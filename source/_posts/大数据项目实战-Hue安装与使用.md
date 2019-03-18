@@ -67,6 +67,14 @@ hadoop_hdfs_home=/opt/modules/hadoop-2.5.0
 
 然后重启Hue,查看网页上是否可以查看hdfs
 
+$HADOOP_CONF/hdfs-site.xml
+```
+    <property>
+      <name>dfs.webhdfs.enabled</name>
+      <value>true</value>
+    </property>
+```
+
 
 ## Hue与Yarn集成
 
@@ -96,6 +104,17 @@ hive_conf_dir=/opt/modules/hive-0.13.1-cdh5.3.0/conf
 
 启动hiveserver2
 
+``` shell
+$ nohup hive --service hiveserver2 >> hiveserver2.log &
+```
+
+``` shell
+$ yum install cyrus-sasl-plain # 安装这个，不然会报以下错误
+Could not start SASL: Error in sasl_client_start (-4) SASL(-4): no mechanism available: No worthy mechs found
+```
+
+
+
 ## Hue与mysql集成
 编辑desktop/conf/hue.ini文件
 
@@ -124,3 +143,16 @@ hbase_clusters=(Cluster|header:9090)
 hbase_conf_dir=/opt/modules/hbase-0.98.6-hadoop2/conf
 ```
 
+## 其他
+当使用比较高的版本(4.0以上)，需要初始化数据库：
+
+```
+$ build/env/bin/hue syncdb
+$ build/env/bin/hue migrate
+```
+
+编译报错, 需要按照以下库：
+
+```
+$ sudo yum install libffi-devel
+```
